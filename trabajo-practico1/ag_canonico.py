@@ -171,7 +171,7 @@ def save_table_as_image(max_v, avg_v, min_v, corridas, max_chromosomes):
         </style>
     </head>
     <body>
-        <h2>Tabla de Fitness para {corridas} corridas</h2>
+        <h2>Tabla de funcion_objetivo para {corridas} corridas</h2>
         <div class="scrollable-table">
             {df.to_html(index=False)}
         </div>
@@ -179,21 +179,20 @@ def save_table_as_image(max_v, avg_v, min_v, corridas, max_chromosomes):
     </html>
     """
 
-    with open(f"tabla_fitness_{corridas}_corridas.html", "w", encoding="utf-8") as f:
+    with open(f"tabla_funcion_objetivo_{corridas}_corridas.html", "w", encoding="utf-8") as f:
         f.write(html)
 
-    print(f"Archivo HTML generado: tabla_fitness_{corridas}_corridas.html")
+    print(f"Archivo HTML generado: tabla_funcion_objetivo_{corridas}_corridas.html")
 
 def plot_results(max_v, avg_v, min_v, corridas):
     corridas_eje_x = list(range(1, corridas + 1))
 
-def plot_results(max_vals, avg_vals, min_vals, corridas):
-    generations = list(range(MAX_GENERATIONS))
     plt.figure(figsize=(12, 6))
-    plt.plot(generations, max_vals, label='Máximo', color='orange')
-    plt.plot(generations, avg_vals, label='Promedio', color='orangered')
-    plt.plot(generations, min_vals, label='Mínimo', color='crimson')
-    plt.xlabel('Generación')
+    plt.plot(corridas_eje_x, max_v, label='Máximo', color='orange', marker='o')
+    plt.plot(corridas_eje_x, avg_v, label='Promedio', color='blue', marker='s')
+    plt.plot(corridas_eje_x, min_v, label='Mínimo', color='green', marker='^')
+
+    plt.xlabel('Corrida')
     plt.ylabel('Fitness')
     plt.title(f'Evolución del Fitness - {corridas} corridas')
     plt.legend()
