@@ -86,45 +86,102 @@ def mutation(individual):
         individual = individual[:i] + inverted_segment + individual[j+1:] #se concatena el segmento invertido en el cromosoma de donde se extrajo, reemplazando al anterior
     return individual
 
-def evolve(pop, metodo_seleccion):
-    
+def evolve(pop, metodo_seleccion, elitismo):
+
     # Convertimos la población binaria a decimal y calculamos el fitness
     decoded = [binary_to_decimal(ind) for ind in pop]
 
     funcion_objetivo_values = [funcion_objetivo(x) for x in decoded]
     fit_values = obtener_fitnesses(funcion_objetivo_values)
 
+    if elitismo == 'f':
     
-    if metodo_seleccion == 'r':                                                             
-        seleccionados = roulette_wheel_selection(pop, fit_values)
+        if metodo_seleccion == 'r':                                                             
+            seleccionados = roulette_wheel_selection(pop, fit_values)
 
-        next_generation = []
-        for i in range(0, POPULATION_SIZE, 2):
-            padre1, padre2 = seleccionados[i], seleccionados[(i+1) % POPULATION_SIZE]
-            hijo1, hijo2 = one_point_crossover(padre1, padre2)
-            next_generation.extend([mutation(hijo1), mutation(hijo2)])
+            next_generation = []
+            for i in range(0, POPULATION_SIZE, 2):
+                padre1, padre2 = seleccionados[i], seleccionados[(i+1) % POPULATION_SIZE]
+                hijo1, hijo2 = one_point_crossover(padre1, padre2)
+                next_generation.extend([mutation(hijo1), mutation(hijo2)])
 
-        return next_generation[:POPULATION_SIZE], funcion_objetivo_values
+            return next_generation[:POPULATION_SIZE], funcion_objetivo_values
+        
+        elif metodo_seleccion == 't':
+            next_generation = []
+            for _ in range(POPULATION_SIZE  // 2):
+                padre1 = torneo_binario_probabilistico(pop, fit_values)
+                padre2 = torneo_binario_probabilistico(pop, fit_values)
+                hijo1, hijo2 = one_point_crossover(padre1, padre2)
+                next_generation.extend([mutation(hijo1), mutation(hijo2)])
+            
+            # Si POPULATION_SIZE es impar, generamos un último hijo
+            if POPULATION_SIZE % 2 == 1:
+                padre1 = torneo_binario_probabilistico(pop, fit_values)
+                padre2 = torneo_binario_probabilistico(pop, fit_values)
+                hijo1, _ = one_point_crossover(padre1, padre2)
+                next_generation.append(mutation(hijo1))
+            
+            return next_generation[:POPULATION_SIZE], funcion_objetivo_values
+        
+        else:
+            raise ValueError("Método de selección no válido. Use '-s r' para ruleta o '-s t' para torneo.")
     
-    elif metodo_seleccion == 't':
-        next_generation = []
-        for _ in range(POPULATION_SIZE  // 2):
-            padre1 = torneo_binario_probabilistico(pop, fit_values)
-            padre2 = torneo_binario_probabilistico(pop, fit_values)
-            hijo1, hijo2 = one_point_crossover(padre1, padre2)
-            next_generation.extend([mutation(hijo1), mutation(hijo2)])
+    elif elitismo == 't':
+        # --- Aplicamos elitismo ---
+        # Paso 1: Seleccionar los 2 mejores cromosomas
+        sorted_fit_values_indices = sorted(range(len(fit_values)), key=lambda i: fit_values[i]) 
+        #Ordena los indices de la lista fit_values, según sus valores de fitness.
+        indice1 = sorted_fit_values_indices[-1] #El índice del mejor individuo
+        indice2 = sorted_fit_values_indices[-2] #El índice del segundo mejor individuo
+        elite_ind1 = pop[indice1]
+        elite_ind2 = pop[indice2]
+        elite_individuals = [elite_ind1, elite_ind2] #GENERALIZARLO CON UN FOR para n individuos
+
+        # Paso 2: Generar los 8 hijos restantes
+        num_hijos_necesarios = POPULATION_SIZE - len(elite_individuals)
+
+        if metodo_seleccion == 'r':                                                             
+            seleccionados = roulette_wheel_selection(pop, fit_values)
+
+            next_generation = []
+            for i in range(0, num_hijos_necesarios, 2):
+                padre1, padre2 = seleccionados[i], seleccionados[(i+1) % POPULATION_SIZE]
+                hijo1, hijo2 = one_point_crossover(padre1, padre2)
+                next_generation.extend([mutation(hijo1), mutation(hijo2)])
+            
+            # En caso de que el número de hijos generados sea mayor a lo necesario (por ser par), truncar
+            next_generation = next_generation[:num_hijos_necesarios]
+            next_generation = next_generation + elite_individuals
+
+            return next_generation[:POPULATION_SIZE], funcion_objetivo_values
         
-        # Si POPULATION_SIZE es impar, generamos un último hijo
-        if POPULATION_SIZE % 2 == 1:
-            padre1 = torneo_binario_probabilistico(pop, fit_values)
-            padre2 = torneo_binario_probabilistico(pop, fit_values)
-            hijo1, _ = one_point_crossover(padre1, padre2)
-            next_generation.append(mutation(hijo1))
+        elif metodo_seleccion == 't':
+            next_generation = []
+            for _ in range(num_hijos_necesarios  // 2):
+                padre1 = torneo_binario_probabilistico(pop, fit_values)
+                padre2 = torneo_binario_probabilistico(pop, fit_values)
+                hijo1, hijo2 = one_point_crossover(padre1, padre2)
+                next_generation.extend([mutation(hijo1), mutation(hijo2)])
+            
+            # Si POPULATION_SIZE es impar, generamos un último hijo
+            if num_hijos_necesarios % 2 == 1:
+                padre1 = torneo_binario_probabilistico(pop, fit_values)
+                padre2 = torneo_binario_probabilistico(pop, fit_values)
+                hijo1, _ = one_point_crossover(padre1, padre2)
+                next_generation.append(mutation(hijo1))
+            
+            next_generation = next_generation[:num_hijos_necesarios]
+            next_generation = next_generation + elite_individuals
+            
+            return next_generation[:POPULATION_SIZE], funcion_objetivo_values
         
-        return next_generation[:POPULATION_SIZE], funcion_objetivo_values
+        else:
+            raise ValueError("Método de selección no válido. Use '-s r' para ruleta o '-s t' para torneo.")
     
     else:
-        raise ValueError("Método de selección no válido. Use '-s r' para ruleta o '-s t' para torneo.")
+        raise ValueError("Valor de elitismo no válido. Use 't' para usar elitismo o 'f' para no usarlo.")
+
 
 
 def save_table_as_image(max_v, avg_v, min_v, corridas, max_chromosomes):
@@ -140,49 +197,22 @@ def save_table_as_image(max_v, avg_v, min_v, corridas, max_chromosomes):
         "Promedio": avg_v_rounded,
         "Mínimo": min_v_rounded
     }
-    
     df = pd.DataFrame(data)
 
-    # Exportar tabla HTML con estilo para scroll
-    html = f"""
-    <html>
-    <head>
-        <style>
-            .scrollable-table {{
-                max-height: 500px;
-                overflow-y: auto;
-                display: block;
-                border: 1px solid #ddd;
-            }}
-            table {{
-                border-collapse: collapse;
-                width: 100%;
-            }}
-            th, td {{
-                border: 1px solid #ddd;
-                padding: 8px;
-                text-align: center;
-            }}
-            th {{
-                background-color: #f2f2f2;
-                position: sticky;
-                top: 0;
-            }}
-        </style>
-    </head>
-    <body>
-        <h2>Tabla de funcion_objetivo para {corridas} corridas</h2>
-        <div class="scrollable-table">
-            {df.to_html(index=False)}
-        </div>
-    </body>
-    </html>
-    """
-
-    with open(f"tabla_funcion_objetivo_{corridas}_corridas.html", "w", encoding="utf-8") as f:
-        f.write(html)
-
-    print(f"Archivo HTML generado: tabla_funcion_objetivo_{corridas}_corridas.html")
+    fig, ax = plt.subplots(figsize=(10, corridas * 0.2 + 1))
+    ax.axis('tight')
+    ax.axis('off')
+    table = ax.table(
+        cellText=df.values,
+        colLabels=list(df.columns),
+        cellLoc='center',
+        loc='center'
+    )
+    table.scale(1.2, 1.2)
+    plt.title(f'Tabla de Fitness para {corridas} corridas', fontsize=12, pad=20)
+    plt.savefig(f'tabla_fitness_{corridas}_corridas.png', bbox_inches='tight', dpi=300)
+    plt.show()
+    plt.close()
 
 def plot_results(max_v, avg_v, min_v, corridas):
     corridas_eje_x = list(range(1, corridas + 1))
@@ -201,7 +231,7 @@ def plot_results(max_v, avg_v, min_v, corridas):
     plt.savefig(f'ga_resultados_{corridas}_corridas.png')
     plt.close()
 
-def run_ga(corridas, metodo_seleccion):
+def run_ga(corridas, metodo_seleccion, elitismo):
     
     #Arrays para almacenar los valores máximo, mínimo y promedio DE CADA corrida
     max_list = np.zeros(corridas)
@@ -221,7 +251,7 @@ def run_ga(corridas, metodo_seleccion):
 
         # Realizamos el loop para las generaciones de cada corrida
         for generation in range(MAX_GENERATIONS):
-            population, funcion_objetivo_values = evolve(population, metodo_seleccion)
+            population, funcion_objetivo_values = evolve(population, metodo_seleccion, elitismo)
             
             #rounded_values = [round(val, 5) for val in fit_values]
 
@@ -263,14 +293,18 @@ def run_ga(corridas, metodo_seleccion):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--seleccion", type=str, required=True, help="Método de seleccion: r (ruleta), t (torneo)")
+    parser.add_argument("-e", "--elitismo", type=str, required=True, help="Se aplica elitismo: t (True), f (False)")
 
     args = parser.parse_args()
 
     if args.seleccion not in ('r', 't'):
         raise ValueError("Método de selección no válido. Use '-s r' para ruleta o '-s t' para torneo.")
 
+    if args.elitismo not in ('t', 'f'):
+        raise ValueError("Valor de elitismo no válido. Use '-e t' para True o '-e f' para False.")
+
     for corridas in [20, 100, 200]:
-        max_v, avg_v, min_v, max_chromosomes = run_ga(corridas, args.seleccion)
+        max_v, avg_v, min_v, max_chromosomes = run_ga(corridas, args.seleccion, args.elitismo)
         #plot_results(max_v, avg_v, min_v, corridas)
         save_table_as_image(max_v, avg_v, min_v, corridas, max_chromosomes)
 
