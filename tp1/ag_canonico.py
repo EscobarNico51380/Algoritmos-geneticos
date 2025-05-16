@@ -211,7 +211,6 @@ def save_table_as_image(max_v, avg_v, min_v, corridas, max_chromosomes):
     table.scale(1.2, 1.2)
     plt.title(f'Tabla de Fitness para {corridas} corridas', fontsize=12, pad=20)
     plt.savefig(f'tabla_fitness_{corridas}_corridas.png', bbox_inches='tight', dpi=300)
-    plt.show()
     plt.close()
 
 def plot_results(max_v, avg_v, min_v, corridas):
@@ -238,75 +237,55 @@ def run_ga(corridas, metodo_seleccion, elitismo):
     avg_list = np.zeros(corridas)
     min_list = np.zeros(corridas)
     max_chromosomes = np.zeros(corridas, dtype=object)
+    
+    population = create_population()
 
-    # Realizamos el loop para el número de corridas
-    for corrida in range(corridas):
-        population = create_population()
 
-        # Variables para almacenar los valores máximo, mínimo y promedio POR corrida
-        corrida_max_value = -float('inf')
-        corrida_min_value = float('inf')
-        corrida_avg_value = 0
-        max_chromosome = None
-
-        # Realizamos el loop para las generaciones de cada corrida
-        for generation in range(MAX_GENERATIONS):
-            population, funcion_objetivo_values = evolve(population, metodo_seleccion, elitismo)
+    # Realizamos el loop para el número de corridas/generaciones
+    for generation in range(corridas):
+        population, funcion_objetivo_values = evolve(population, metodo_seleccion, elitismo)
             
-            #rounded_values = [round(val, 5) for val in fit_values]
-
-            # Calculamos el valor máximo, mínimo y promedio de la población de esta generación
-            max_value = max(funcion_objetivo_values)  
-            min_value = min(funcion_objetivo_values)
-            avg_value = sum(funcion_objetivo_values) / len(funcion_objetivo_values)
-
-            # Mostramos los resultados de la generación
-            print(f"Corrida {corrida}, Generación {generation}:")
-            print(f"  Máximo: {max_value}, Mínimo: {min_value}, Promedio: {avg_value}")
-
-            # Actualizamos los valores de la corrida
-            if max_value > corrida_max_value:
-                corrida_max_value = max_value
-                idx_max = np.argmax(funcion_objetivo_values)
-                max_chromosome = population[idx_max]
-
-            if min_value < corrida_min_value:
-                corrida_min_value = min_value
-
-            #Sumamos los promedios de cada generación
-            corrida_avg_value += avg_value
-
-        # Calculamos el promedio de la suma de los promedios de la corrida
-        corrida_avg_value /= MAX_GENERATIONS
+        # Calculamos el valor máximo, mínimo y promedio de la población
+        max_value = max(funcion_objetivo_values)  
+        min_value = min(funcion_objetivo_values)
+        avg_value = sum(funcion_objetivo_values) / len(funcion_objetivo_values)
 
         # Almacenamos los valores de máximo, mínimo y promedio para esta corrida
-        max_list[corrida] = corrida_max_value
-        avg_list[corrida] = corrida_avg_value
-        min_list[corrida] = corrida_min_value
+        max_list[generation] = max_value
+        avg_list[generation] = avg_value
+        min_list[generation] = min_value
+        # Buscamos el cromosoma correspondiente al máximo de la función objetivo
+        max_index = funcion_objetivo_values.index(max_value)
+        max_chromosome = population[max_index]
         
         # Añadimos el cromosoma correspondiente al máximo de la función objetivo
-        max_chromosomes[corrida] = max_chromosome
+        max_chromosomes[generation] = max_chromosome
         
        
     return max_list, avg_list, min_list, max_chromosomes
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--corridas", type=int, required=True, help="Número de corridas")
     parser.add_argument("-s", "--seleccion", type=str, required=True, help="Método de seleccion: r (ruleta), t (torneo)")
     parser.add_argument("-e", "--elitismo", type=str, required=True, help="Se aplica elitismo: t (True), f (False)")
 
     args = parser.parse_args()
+    
+    if args.corridas <= 0:
+        raise ValueError("El número de corridas debe ser mayor que 0.")
 
     if args.seleccion not in ('r', 't'):
         raise ValueError("Método de selección no válido. Use '-s r' para ruleta o '-s t' para torneo.")
 
     if args.elitismo not in ('t', 'f'):
         raise ValueError("Valor de elitismo no válido. Use '-e t' para True o '-e f' para False.")
+    
+    corridas = args.corridas
 
-    for corridas in [20, 100, 200]:
-        max_v, avg_v, min_v, max_chromosomes = run_ga(corridas, args.seleccion, args.elitismo)
-        #plot_results(max_v, avg_v, min_v, corridas)
-        save_table_as_image(max_v, avg_v, min_v, corridas, max_chromosomes)
+    max_v, avg_v, min_v, max_chromosomes = run_ga(corridas, args.seleccion, args.elitismo)
+    plot_results(max_v, avg_v, min_v, corridas)
+    save_table_as_image(max_v, avg_v, min_v, corridas, max_chromosomes)
 
 
 if __name__ == '__main__':
