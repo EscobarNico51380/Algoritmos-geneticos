@@ -80,10 +80,13 @@ def one_point_crossover(parent1, parent2):
 def mutation(individual):
     if random.random() < MUTATION_PROB: #Se invoca la función random.random y si sale menor que la probabilidad de la mutación, ingresa a esta misma
         print("MUTACIÓN APLICADA")
-        i, j = sorted(random.sample(range(BIT_LENGTH), 2)) # Se toma el cromosoma y se escoge desde donde --> inicio (i) hasta donde --> final (j) se va a cortar un segmento (que es con el cúal trabajaremos)
-        segment = individual[i:j+1] #se inicializa una variable donde se almacenara el segmento
-        inverted_segment = segment[::-1] #se invierte de fin a inicio, es decir, si el segmento era 1100 el resultado sería 0011
-        individual = individual[:i] + inverted_segment + individual[j+1:] #se concatena el segmento invertido en el cromosoma de donde se extrajo, reemplazando al anterior
+        bit_a_modificar = random.randint(0, BIT_LENGTH - 1) #Se elige un bit al azar
+        individual = list(individual) #Se convierte el cromosoma a una lista para poder modificarlo porque los strings son inmutables
+        if individual[bit_a_modificar] == '0':
+            individual[bit_a_modificar] = '1'
+        else:
+            individual[bit_a_modificar] = '0'
+        individual = ''.join(individual) #Se convierte nuevamente a string
     return individual
 
 def evolve(pop, metodo_seleccion, elitismo):

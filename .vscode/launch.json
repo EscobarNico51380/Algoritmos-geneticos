@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: ag_canonico",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/ag_canonico.py",
+      "args": ["-c", "100", "-s", "r", "-e", "f"],
+      "console": "integratedTerminal"
+    }
+  ]
+}
