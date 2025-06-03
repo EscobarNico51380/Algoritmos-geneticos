@@ -19,13 +19,13 @@ def decimal_to_binary(n):
     return format(n, f'0{BIT_LENGTH}b')
 
 def funcion_objetivo(x):
-    return (x / COEF)**2
+    return round((x / COEF)**2,10)
 
 def obtener_fitnesses(funcion_objetivo_values):
     
     sumatoria_function_values = sum(funcion_objetivo_values)
     
-    fitness_values = [f / sumatoria_function_values for f in funcion_objetivo_values]
+    fitness_values = [round(f / sumatoria_function_values, 10) for f in funcion_objetivo_values]
     
     #Debugging
     print("Sumatoria de fitness (debe dar 1):", sum(fitness_values))
@@ -54,21 +54,25 @@ def roulette_wheel_selection(pop, fitnesses):
             #Sino, vuelve al ciclo y sigue buscando a quien le corresponde el número aleatorio
     return seleccionados
 
-def torneo_binario_probabilistico(pop, fitnesses, prob_mejor=0.8): #hay un 80% de probabilidad de que el mejor sea el padre
+def torneo_binario_probabilistico(pop, fitnesses):
     #Elegimos dos individuos al azar
     i1 = random.randint(0, len(pop) - 1)
     i2 = random.randint(0, len(pop) - 1)
-    #Comparamos sus fitnesses
-    if fitnesses[i1] > fitnesses[i2]:
-        mejor, peor = i1, i2
-    else:
-        mejor, peor = i2, i1
+    i3 = random.randint(0, len(pop) - 1)
+    i4 = random.randint(0, len(pop) - 1)
 
-    #Elegimos al mejor o al peor dependiendo de la probabilidad dada
-    if random.random() < prob_mejor:
-        return pop[mejor]
-    else:
-        return pop[peor]
+    #Comparamos sus fitnesses
+      # Determinamos el mejor y el peor entre los cuatro usando ifs
+    mejor = i1
+    if fitnesses[i2] > fitnesses[mejor]:
+        mejor = i2
+    if fitnesses[i3] > fitnesses[mejor]:
+        mejor = i3
+    if fitnesses[i4] > fitnesses[mejor]:
+        mejor = i4
+    
+    return pop[mejor]
+    
 
 def one_point_crossover(parent1, parent2):
     if random.random() < CROSSOVER_PROB:
@@ -143,20 +147,14 @@ def evolve(pop, metodo_seleccion, elitismo):
         # Obtener los individuos élite a partir de sus índices
         elite_individuals = [pop[i] for i in elite_indices]
 
-        # Crear nuevos arrays excluyendo a los individuos élite
-        indices_elite_set = set(elite_indices)
-        pop_filtrada = [ind for i, ind in enumerate(pop) if i not in indices_elite_set]
-        fit_values_filtrados = [fit for i, fit in enumerate(fit_values) if i not in indices_elite_set]
 
-        #Entonces, nos aseguramos que los hijos restantes no sean los mismos que los de élite
-
-        #Genera los 8 hijos restantes
+        #Luego, genera los 8 hijos restantes
         num_hijos_necesarios = POPULATION_SIZE - len(elite_individuals)
 
         if metodo_seleccion == 'r':  
             seleccionados = []                                                           
             while len(seleccionados) < num_hijos_necesarios:
-                nuevos = roulette_wheel_selection(pop_filtrada, fit_values_filtrados)
+                nuevos = roulette_wheel_selection(pop, fit_values)
                 seleccionados.extend(nuevos)
             seleccionados = seleccionados[:num_hijos_necesarios] # Me aseguro de que len(seleccionados) ≥ num_hijos_necesarios y está bien definido cuando num_hijos_necesarios es impar.
 
@@ -172,15 +170,15 @@ def evolve(pop, metodo_seleccion, elitismo):
         elif metodo_seleccion == 't':
             next_generation = []
             for _ in range(num_hijos_necesarios  // 2):
-                padre1 = torneo_binario_probabilistico(pop_filtrada, fit_values_filtrados)
-                padre2 = torneo_binario_probabilistico(pop_filtrada, fit_values_filtrados)
+                padre1 = torneo_binario_probabilistico(pop, fit_values)
+                padre2 = torneo_binario_probabilistico(pop, fit_values)
                 hijo1, hijo2 = one_point_crossover(padre1, padre2)
                 next_generation.extend([mutation(hijo1), mutation(hijo2)])
             
             # Si num_hijos_necesarios es impar, generamos un último hijo
             if num_hijos_necesarios % 2 == 1:
-                padre1 = torneo_binario_probabilistico(pop_filtrada, fit_values_filtrados)
-                padre2 = torneo_binario_probabilistico(pop_filtrada, fit_values_filtrados)
+                padre1 = torneo_binario_probabilistico(pop, fit_values)
+                padre2 = torneo_binario_probabilistico(pop, fit_values)
                 hijo1, _ = one_point_crossover(padre1, padre2)
                 next_generation.append(mutation(hijo1))
             
@@ -199,9 +197,9 @@ def evolve(pop, metodo_seleccion, elitismo):
 
 def save_table_as_image(max_v, avg_v, min_v, corridas, max_chromosomes):
     
-    max_v_rounded = [round(val, 5) for val in max_v]
-    avg_v_rounded = [round(val, 5) for val in avg_v]
-    min_v_rounded = [round(val, 5) for val in min_v]
+    max_v_rounded = [round(val, 10) for val in max_v]
+    avg_v_rounded = [round(val, 10) for val in avg_v]
+    min_v_rounded = [round(val, 10) for val in min_v]
 
     data = {
         "Corrida": list(range(1, corridas + 1)),
