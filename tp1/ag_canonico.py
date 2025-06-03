@@ -9,7 +9,6 @@ BIT_LENGTH = 30
 POPULATION_SIZE = 10
 CROSSOVER_PROB = 0.75
 MUTATION_PROB = 0.05
-MAX_GENERATIONS = 20
 MAX_VALUE = 2**BIT_LENGTH - 1
 COEF = MAX_VALUE
 
@@ -97,21 +96,21 @@ def evolve(pop, metodo_seleccion, elitismo):
     funcion_objetivo_values = [funcion_objetivo(x) for x in decoded]
     fit_values = obtener_fitnesses(funcion_objetivo_values)
 
+    next_generation = []
+
     if elitismo == 'f':
     
         if metodo_seleccion == 'r':                                                             
+            #Selecciona a los que serán padres
             seleccionados = roulette_wheel_selection(pop, fit_values)
 
-            next_generation = []
+            # Realiza el cruce y mutación
             for i in range(0, POPULATION_SIZE, 2):
                 padre1, padre2 = seleccionados[i], seleccionados[(i+1) % POPULATION_SIZE]
                 hijo1, hijo2 = one_point_crossover(padre1, padre2)
                 next_generation.extend([mutation(hijo1), mutation(hijo2)])
 
-            return next_generation[:POPULATION_SIZE], funcion_objetivo_values
-        
         elif metodo_seleccion == 't':
-            next_generation = []
             for _ in range(POPULATION_SIZE  // 2):
                 padre1 = torneo_binario_probabilistico(pop, fit_values)
                 padre2 = torneo_binario_probabilistico(pop, fit_values)
@@ -124,32 +123,45 @@ def evolve(pop, metodo_seleccion, elitismo):
                 padre2 = torneo_binario_probabilistico(pop, fit_values)
                 hijo1, _ = one_point_crossover(padre1, padre2)
                 next_generation.append(mutation(hijo1))
-            
-            return next_generation[:POPULATION_SIZE], funcion_objetivo_values
         
-        else:
-            raise ValueError("Método de selección no válido. Use '-s r' para ruleta o '-s t' para torneo.")
+        decoded_next_generation = [binary_to_decimal(ind) for ind in next_generation]
+        funcion_objetivo_values_next_generation = [funcion_objetivo(x) for x in decoded_next_generation]
+
+        return next_generation[:POPULATION_SIZE], funcion_objetivo_values_next_generation
+        
     
     elif elitismo == 't':
         # --- Aplicamos elitismo ---
-        # Paso 1: Seleccionar los 2 mejores cromosomas
-        sorted_fit_values_indices = sorted(range(len(fit_values)), key=lambda i: fit_values[i]) 
-        #Ordena los indices de la lista fit_values, según sus valores de fitness.
-        indice1 = sorted_fit_values_indices[-1] #El índice del mejor individuo
-        indice2 = sorted_fit_values_indices[-2] #El índice del segundo mejor individuo
-        elite_ind1 = pop[indice1]
-        elite_ind2 = pop[indice2]
-        elite_individuals = [elite_ind1, elite_ind2] #GENERALIZARLO CON UN FOR para n individuos
+        n_elite = 2  # cuántos individuos de élite se quieren
 
-        # Paso 2: Generar los 8 hijos restantes
+        # Ordenar los índices según fitness (de menor a mayor si menor es peor)
+        sorted_fit_values_indices = sorted(range(len(fit_values)), key=lambda i: fit_values[i])
+
+        # Obtener los índices de los mejores individuos (los n últimos)
+        elite_indices = sorted_fit_values_indices[-n_elite:]
+
+        # Obtener los individuos élite a partir de sus índices
+        elite_individuals = [pop[i] for i in elite_indices]
+
+        # Crear nuevos arrays excluyendo a los individuos élite
+        indices_elite_set = set(elite_indices)
+        pop_filtrada = [ind for i, ind in enumerate(pop) if i not in indices_elite_set]
+        fit_values_filtrados = [fit for i, fit in enumerate(fit_values) if i not in indices_elite_set]
+
+        #Entonces, nos aseguramos que los hijos restantes no sean los mismos que los de élite
+
+        #Genera los 8 hijos restantes
         num_hijos_necesarios = POPULATION_SIZE - len(elite_individuals)
 
-        if metodo_seleccion == 'r':                                                             
-            seleccionados = roulette_wheel_selection(pop, fit_values)
+        if metodo_seleccion == 'r':  
+            seleccionados = []                                                           
+            while len(seleccionados) < num_hijos_necesarios:
+                nuevos = roulette_wheel_selection(pop_filtrada, fit_values_filtrados)
+                seleccionados.extend(nuevos)
+            seleccionados = seleccionados[:num_hijos_necesarios] # Me aseguro de que len(seleccionados) ≥ num_hijos_necesarios y está bien definido cuando num_hijos_necesarios es impar.
 
-            next_generation = []
             for i in range(0, num_hijos_necesarios, 2):
-                padre1, padre2 = seleccionados[i], seleccionados[(i+1) % POPULATION_SIZE]
+                padre1, padre2 = seleccionados[i], seleccionados[(i+1) % len(seleccionados)]
                 hijo1, hijo2 = one_point_crossover(padre1, padre2)
                 next_generation.extend([mutation(hijo1), mutation(hijo2)])
             
@@ -157,30 +169,28 @@ def evolve(pop, metodo_seleccion, elitismo):
             next_generation = next_generation[:num_hijos_necesarios]
             next_generation = next_generation + elite_individuals
 
-            return next_generation[:POPULATION_SIZE], funcion_objetivo_values
-        
         elif metodo_seleccion == 't':
             next_generation = []
             for _ in range(num_hijos_necesarios  // 2):
-                padre1 = torneo_binario_probabilistico(pop, fit_values)
-                padre2 = torneo_binario_probabilistico(pop, fit_values)
+                padre1 = torneo_binario_probabilistico(pop_filtrada, fit_values_filtrados)
+                padre2 = torneo_binario_probabilistico(pop_filtrada, fit_values_filtrados)
                 hijo1, hijo2 = one_point_crossover(padre1, padre2)
                 next_generation.extend([mutation(hijo1), mutation(hijo2)])
             
-            # Si POPULATION_SIZE es impar, generamos un último hijo
+            # Si num_hijos_necesarios es impar, generamos un último hijo
             if num_hijos_necesarios % 2 == 1:
-                padre1 = torneo_binario_probabilistico(pop, fit_values)
-                padre2 = torneo_binario_probabilistico(pop, fit_values)
+                padre1 = torneo_binario_probabilistico(pop_filtrada, fit_values_filtrados)
+                padre2 = torneo_binario_probabilistico(pop_filtrada, fit_values_filtrados)
                 hijo1, _ = one_point_crossover(padre1, padre2)
                 next_generation.append(mutation(hijo1))
             
             next_generation = next_generation[:num_hijos_necesarios]
             next_generation = next_generation + elite_individuals
             
-            return next_generation[:POPULATION_SIZE], funcion_objetivo_values
-        
-        else:
-            raise ValueError("Método de selección no válido. Use '-s r' para ruleta o '-s t' para torneo.")
+        decoded_next_generation = [binary_to_decimal(ind) for ind in next_generation]
+        funcion_objetivo_values_next_generation = [funcion_objetivo(x) for x in decoded_next_generation]
+
+        return next_generation[:POPULATION_SIZE], funcion_objetivo_values_next_generation
     
     else:
         raise ValueError("Valor de elitismo no válido. Use 't' para usar elitismo o 'f' para no usarlo.")
