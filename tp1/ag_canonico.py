@@ -55,7 +55,7 @@ def roulette_wheel_selection(pop, fitnesses):
     return seleccionados
 
 def torneo_binario_probabilistico(pop, fitnesses):
-    #Elegimos dos individuos al azar
+    #Elegimos cuatro individuos al azar
     i1 = random.randint(0, len(pop) - 1)
     i2 = random.randint(0, len(pop) - 1)
     i3 = random.randint(0, len(pop) - 1)
@@ -228,9 +228,9 @@ def plot_results(max_v, avg_v, min_v, corridas):
     corridas_eje_x = list(range(1, corridas + 1))
 
     plt.figure(figsize=(12, 6))
-    plt.plot(corridas_eje_x, max_v, label='Máximo', color='orange', marker='o')
-    plt.plot(corridas_eje_x, avg_v, label='Promedio', color='blue', marker='s')
-    plt.plot(corridas_eje_x, min_v, label='Mínimo', color='green', marker='^')
+    plt.plot(corridas_eje_x, max_v, label='Máximo', color='orange')
+    plt.plot(corridas_eje_x, avg_v, label='Promedio', color='blue')
+    plt.plot(corridas_eje_x, min_v, label='Mínimo', color='green')
 
     plt.xlabel('Corrida')
     plt.ylabel('Fitness')
