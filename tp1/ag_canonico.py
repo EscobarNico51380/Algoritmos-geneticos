@@ -54,7 +54,7 @@ def roulette_wheel_selection(pop, fitnesses):
             #Sino, vuelve al ciclo y sigue buscando a quien le corresponde el número aleatorio
     return seleccionados
 
-def torneo_binario_probabilistico(pop, fitnesses):
+def seleccion_torneo(pop, fitnesses):
     #Elegimos dos individuos al azar
     i1 = random.randint(0, len(pop) - 1)
     i2 = random.randint(0, len(pop) - 1)
@@ -62,7 +62,7 @@ def torneo_binario_probabilistico(pop, fitnesses):
     i4 = random.randint(0, len(pop) - 1)
 
     #Comparamos sus fitnesses
-      # Determinamos el mejor y el peor entre los cuatro usando ifs
+      # Determinamos el mejor entre los cuatro usando ifs
     mejor = i1
     if fitnesses[i2] > fitnesses[mejor]:
         mejor = i2
@@ -116,15 +116,15 @@ def evolve(pop, metodo_seleccion, elitismo):
 
         elif metodo_seleccion == 't':
             for _ in range(POPULATION_SIZE  // 2):
-                padre1 = torneo_binario_probabilistico(pop, fit_values)
-                padre2 = torneo_binario_probabilistico(pop, fit_values)
+                padre1 = seleccion_torneo(pop, fit_values)
+                padre2 = seleccion_torneo(pop, fit_values)
                 hijo1, hijo2 = one_point_crossover(padre1, padre2)
                 next_generation.extend([mutation(hijo1), mutation(hijo2)])
             
             # Si POPULATION_SIZE es impar, generamos un último hijo
             if POPULATION_SIZE % 2 == 1:
-                padre1 = torneo_binario_probabilistico(pop, fit_values)
-                padre2 = torneo_binario_probabilistico(pop, fit_values)
+                padre1 = seleccion_torneo(pop, fit_values)
+                padre2 = seleccion_torneo(pop, fit_values)
                 hijo1, _ = one_point_crossover(padre1, padre2)
                 next_generation.append(mutation(hijo1))
         
@@ -170,15 +170,15 @@ def evolve(pop, metodo_seleccion, elitismo):
         elif metodo_seleccion == 't':
             next_generation = []
             for _ in range(num_hijos_necesarios  // 2):
-                padre1 = torneo_binario_probabilistico(pop, fit_values)
-                padre2 = torneo_binario_probabilistico(pop, fit_values)
+                padre1 = seleccion_torneo(pop, fit_values)
+                padre2 = seleccion_torneo(pop, fit_values)
                 hijo1, hijo2 = one_point_crossover(padre1, padre2)
                 next_generation.extend([mutation(hijo1), mutation(hijo2)])
             
             # Si num_hijos_necesarios es impar, generamos un último hijo
             if num_hijos_necesarios % 2 == 1:
-                padre1 = torneo_binario_probabilistico(pop, fit_values)
-                padre2 = torneo_binario_probabilistico(pop, fit_values)
+                padre1 = seleccion_torneo(pop, fit_values)
+                padre2 = seleccion_torneo(pop, fit_values)
                 hijo1, _ = one_point_crossover(padre1, padre2)
                 next_generation.append(mutation(hijo1))
             
