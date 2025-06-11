@@ -4,12 +4,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import argparse
 import os
-
+from openpyxl.workbook import Workbook
 # Parámetros generales
 BIT_LENGTH = 30
 POPULATION_SIZE = 10
 CROSSOVER_PROB = 0.75
-MUTATION_PROB = 0.01
+MUTATION_PROB = 0.05
 MAX_VALUE = 2**BIT_LENGTH - 1
 COEF = MAX_VALUE
 
