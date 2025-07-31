@@ -1,7 +1,6 @@
 import osmnx as ox
 import shapely
 import random
-
 import osmnx as ox
 from shapely.geometry import Point
 from geopy.distance import geodesic
@@ -75,7 +74,7 @@ def find_nearest_hub(delivery_coord, hub_coords):
     return min(hub_coords, key=lambda hub: geodesic(hub, delivery_coord).meters)
 
 
-def generate_orders_GIS(cant_orders, cant_hubs):
+def generate_orders_GIS(cant_orders, cant_hubs, cant_drones):
     pickUp_points_orders, zona_pickUp = generate_pickup_points(cant_orders)
     delivery_points_orders, zona_delivery = generate_delivery_points(cant_orders)
 
@@ -92,29 +91,33 @@ def generate_orders_GIS(cant_orders, cant_hubs):
         nearest_hub = find_nearest_hub(delivery, hub_points)
         orders[f"order{i}"] = (pickup, delivery, nearest_hub)
 
-    return pickUp_points_orders, delivery_points_orders, hub_points, orders
+    return(orders)
 
 
-pickUp_points, delivery_points, hubs_points, orders = generate_orders_GIS(10, 5)
-print(f"'PickUp_points': \n  {pickUp_points} \n total: {len(pickUp_points)}")
-print(f"'Delivery_points': \n  {delivery_points} \n total: {len(delivery_points)}")
-print(f"'hubs_points': \n  {hubs_points} \n total: {len(hubs_points)}")
-print(f"'ORDERS': \n  {orders} \n total: {len(orders)}")
+# pickUp_points, delivery_points, hubs_points, orders = generate_orders_GIS(10, 5,5)
+# print(f"'PickUp_points': \n  {pickUp_points} \n total: {len(pickUp_points)}")
+# print(f"'Delivery_points': \n  {delivery_points} \n total: {len(delivery_points)}")
+# print(f"'hubs_points': \n  {hubs_points} \n total: {len(hubs_points)}")
+# print(f"'ORDERS': \n  {orders} \n total: {len(orders)}")
 
 
-def generate_orders_combination( orders, num_drones):
+
+def generate_orders_combination(orders, cant_drones):
     """Devuelve una tupla (orden_tareas, cortes)"""
     
-    #1. Creo una combinación aleatoria de los pedidos --> Un cromosoma
+    # 1. Creo una combinación aleatoria de los pedidos --> Un cromosoma
+    order = random.sample(list(orders), len(list(orders)))  # Permutación aleatoria sin repetición
+    
+    # 2. Genero (cant_drones - 1) cortes únicos y ordenados
+    cuts = sorted(random.sample(range(1, len(list(orders))), cant_drones - 1))
 
-    #2. Para el cromosoma de tareas, se generarán cortes aleatorios.
-
-    #3. Devuelvo la tupla
+    # 3. Devuelvo la tupla
     return (order, cuts)
 
+def generate_population(population_size, orders, cant_drones):
 
-def generate_population(population_size, orders):
+    return [generate_orders_combination(orders, cant_drones) for _ in range(population_size)]
 
-    return [generate_orders_combination(orders, num_drones) for _ in range(population_size)]
-
-
+orders = generate_orders_GIS(20, 10, 5)
+chromosomes = generate_population(30, orders,5)
+print(chromosomes)
