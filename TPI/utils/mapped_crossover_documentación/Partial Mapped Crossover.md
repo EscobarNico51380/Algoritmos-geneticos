@@ -22,7 +22,7 @@ Observación:
 
 ![Paso 3 crossover](Pasted_image_20250804160009.png)
 
-Observación: La "ruta" o "mappeo" se basa en establecer una relación basada en los segmentos cortados.
+Observación: La "ruta" o "mappeo" consta de establecer una relación basada en los segmentos cortados.
 
 ### Paso 4: Terminar de definir al hijo con el mappeo realizado en el paso 3
 
