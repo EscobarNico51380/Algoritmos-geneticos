@@ -10,11 +10,9 @@ objetos = {
     "objeto9": (930, 46),
     "objeto10": (353, 28)
 }
-contador_rechazadas = 0 #Contador de combinaciones que exceden la medida max
 medida_max = 4200
 
 claves = list(objetos.keys())
-todas_las_combinaciones = [] #Luego, elijo la que tiene valor_total mayor
 
 valor_volumen = {}
 for clave in claves:
@@ -27,7 +25,7 @@ ordenados = sorted(claves, key=lambda k: valor_volumen[k], reverse=True)
 def algoritmo_greedy():
     volumen_usado = 0
     valor_total = 0
-    seleccionados = []
+    combinacion_parcial = []
 
     for clave in ordenados:
         volumen, valor = objetos[clave]
@@ -35,24 +33,13 @@ def algoritmo_greedy():
             # entra completo
             volumen_usado += volumen
             valor_total += valor
-            seleccionados.append((clave, 1))  # 1 significa completo
+            combinacion_parcial.append(clave)
         else:
-            # fracción posible
-            restante = medida_max - volumen_usado
-            fraccion = restante / volumen
-            valor_total += valor * fraccion
-            volumen_usado += restante
-            seleccionados.append((clave, fraccion))
             break
 
     # Mostrar resultados
     print(f"Valor total obtenido: ${valor_total:.2f}")
     print(f"Volumen total usado: {volumen_usado} cm³")
-    print("Objetos seleccionados:")
-    for nombre, fraccion in seleccionados:
-        if fraccion == 1:
-            print(f"  {nombre} (completo)")
-        else:
-            print(f"  {nombre} ({fraccion:.2%} del objeto)")
+    print(f"Objetos combinacion_parcial: {combinacion_parcial}")
 
 algoritmo_greedy()
