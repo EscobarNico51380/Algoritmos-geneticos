@@ -35,7 +35,7 @@ def algoritmo_greedy():
             valor_total += valor
             combinacion_parcial.append(clave)
         else:
-            break
+            continue # seguir probando con otros objetos
 
     # Mostrar resultados
     print(f"Valor total obtenido: ${valor_total:.2f}")

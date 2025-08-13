@@ -139,6 +139,7 @@ def evolve(pop, metodo_seleccion, elitismo):
         
     
     elif elitismo == 't':
+        ## Guarda los mejores individuos (según el fitness) y los matiene para la próxima generación, llena el resto de lugares con hijos pero no reemplaza a los mejores
         # --- Aplicamos elitismo ---
         n_elite = 2  # cuántos individuos de élite se quieren
 
