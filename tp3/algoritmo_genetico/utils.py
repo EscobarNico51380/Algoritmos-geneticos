@@ -13,7 +13,34 @@ def crear_poblacion_inicial():
     return poblacion
 
 
-def crossover_ciclico()
+def crossover_ciclico(padre1, padre2):
+    """
+    Realiza el crossover cíclico entre dos padres para generar dos hijos.
+    """
+    longitud = len(padre1)
+    hijo1 = [-1] * longitud
+    hijo2 = [-1] * longitud
+
+    # Elegir un punto inicial para el ciclo
+    inicio = 0
+    while -1 in hijo1:
+        if hijo1[inicio] == -1:
+            valor = padre1[inicio]
+            while True:
+                hijo1[inicio] = padre1[inicio]
+                hijo2[inicio] = padre2[inicio]
+                valor = padre2[inicio]
+                inicio = padre1.index(valor)
+                if valor == padre1[hijo1.index(-1)]:
+                    break
+
+    # Rellenar los valores restantes
+    for i in range(longitud):
+        if hijo1[i] == -1:
+            hijo1[i] = padre2[i]
+            hijo2[i] = padre1[i]
+
+    return hijo1, hijo2
 
 def mutacion(individual):
     if random.random() < config.PROBABILIDAD_MUTACION: #Se invoca la función random.random y si sale menor que la probabilidad de la mutación, ingresa a esta misma
