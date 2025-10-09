@@ -1,17 +1,12 @@
-import pandas as pd
 import numpy as np
-import unicodedata
+import pandas as pd
 
-def limpiar_tildes(texto):
-    return ''.join(c for c in unicodedata.normalize('NFKD', texto) if not unicodedata.combining(c))
-
-# --- Cargar matriz de distancias desde Excel ---
 def cargar_matriz(nombre_archivo):
-    df = pd.read_excel(nombre_archivo, index_col=0)
+    # Lee el archivo y salta la primera fila (que dice "Distancias en kilómetros")
+    df = pd.read_excel("TablaCapitales.xlsx", skiprows=0, index_col=0)
 
-    df.columns = [limpiar_tildes(c).strip() for c in df.columns]
-    df.index = [limpiar_tildes(i).strip() for i in df.index]
     return df
+
 
 # --- Heurística del vecino más cercano ---
 def vecino_mas_cercano(matriz, ciudad_inicio):
@@ -23,7 +18,7 @@ def vecino_mas_cercano(matriz, ciudad_inicio):
     while len(visitadas) < len(ciudades):
         no_visitadas = [c for c in ciudades if c not in visitadas]
         distancias = matriz.loc[actual, no_visitadas]
-        ciudad_mas_cercana = distancias.idxmin()
+        ciudad_mas_cercana = distancias.idxmin() #Esto devuelve el nombre de la ciudad
         distancia_total += distancias.min()
         visitadas.append(ciudad_mas_cercana)
         actual = ciudad_mas_cercana
@@ -38,6 +33,16 @@ def vecino_mas_cercano(matriz, ciudad_inicio):
 def menu():
 
     matriz = cargar_matriz("TablaCapitales.xlsx")
+    
+    # print(matriz)
+    # print(matriz.columns)
+    # print(matriz.index)
+    # print(f"Distancia entre Bs As y Córdoba: {matriz.loc['Cdad. de Bs. As.', 'Cordoba']} km")
+
+    # distancias = matriz.loc["Cdad. de Bs. As.", ['Cordoba', 'Corrientes']]
+    # ciudad_mas_cercana = distancias.idxmin() 
+    # print(f"La ciudad más cercana a Bs As es {ciudad_mas_cercana} con {distancias.min()} km")
+    
     ciudades = list(matriz.columns)
 
     while True:
