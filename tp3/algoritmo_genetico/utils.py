@@ -109,7 +109,15 @@ def funcion_objetivo(individuo, matriz):
 
     return distancia_total
 
-def fitness(individuo, matriz):
+def fitness_local(distancia, suma_total_distancias):
     # Calcula el fitness de un individuo basado en la distancia total recorrida.
-    distancia = funcion_objetivo(individuo, matriz)
-    return 1 / distancia if distancia > 0 else 0
+    #Hay que calcular la suma de todas las distancias de todos los individuos
+
+    return (distancia / suma_total_distancias) if distancia > 0 else 0
+
+def fitness_global(distancias, fit_min, fit_max):
+    # Normaliza el fitness a un rango [fit_min, fit_max] basado en los valores mínimo y máximo globales.
+    rango = fit_max - fit_min
+
+    fitnesses_globales = [1 - ((dist - fit_min) / rango) for dist in distancias]
+    return fitnesses_globales
