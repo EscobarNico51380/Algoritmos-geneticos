@@ -54,7 +54,7 @@ def mutacion(individual):
         individual = ''.join(individual) #Se convierte nuevamente a string
     return individual
 
-def ruleta(pop, fitnesses):
+def seleccion_ruleta(pop, fitnesses):
     probs_acumuladas, acumulado = [], 0
     for prob in fitnesses:
         acumulado += prob
@@ -88,3 +88,19 @@ def torneo(pop, fitnesses):
         mejor = i4
     
     return pop[mejor]
+
+def funcion_objetivo(individuo, matriz):
+    # Calcula la distancia total recorrida por un individuo (ruta).
+  
+    distancia_total = 0
+    for i in range(len(individuo)):
+        ciudad_actual = individuo[i]
+        ciudad_siguiente = individuo[(i + 1) % len(individuo)]  # Regresa a la ciudad inicial
+        distancia_total += matriz.iloc[ciudad_actual-1, ciudad_siguiente-1]
+
+    return distancia_total
+
+def fitness(individuo, matriz):
+    # Calcula el fitness de un individuo basado en la distancia total recorrida.
+    distancia = funcion_objetivo(individuo, matriz)
+    return 1 / distancia if distancia > 0 else 0

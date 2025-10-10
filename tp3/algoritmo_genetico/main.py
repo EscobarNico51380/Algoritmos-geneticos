@@ -1,77 +1,90 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 import utils
 import config
 
 def cargar_matriz(nombre_archivo):
     # Lee el archivo y salta la primera fila (que dice "Distancias en kilómetros")
-    df = pd.read_excel("TablaCapitales.xlsx", skiprows=0, index_col=0)
+    ruta_completa = f"../{nombre_archivo}"
+    df = pd.read_excel(ruta_completa, skiprows=0, index_col=0)
 
     return df
 
 def run_optimization():
-
     matriz = cargar_matriz("TablaCapitales.xlsx")
 
-    # 2. Iniciar el algoritmo genético
-    poblacion = utils.crear_poblacion_inicial(matriz)
+    # Crear población inicial
+    poblacion = utils.crear_poblacion_inicial()
 
-    mejor_individuo_global = None
-    mejor_generacion = 0  # Rastrear la mejor generación
-    
-    #Para normalización global del fitness
-    distancia_menor_global = 0 #El limite mínimo de un individuo viable es > 0
-    distancia_mayor_global = 50e6 # El limite máximo es arbitrario. Se supone que en MJ no consumiran mas de 5MJ
-    mejor_distancia_global = float('inf') #Para almacenar la mejor distancia global de los individuos
+    # Configuración del algoritmo genético
+    generaciones = config.NUM_GENERACIONES
+    mejor_individuo = None
+    mejor_fitness = 0
 
-    # Listas para guardar el historial del fitness
+    # Historial para el gráfico
     max_fitness_history = []
     avg_fitness_history = []
     min_fitness_history = []
 
-    max_distancias_history = []
-    avg_distancias_history = []
-    min_distancias_history = []
+    for gen in range(generaciones):
+        # Evaluar fitness de la población
+        fitnesses = [utils.fitness(ind, matriz) for ind in poblacion]
 
-    nmax = config.NUM_GENERACIONES
+        # Verificar consistencia de datos
+        assert len(fitnesses) == len(poblacion), "Las listas fitnesses y poblacion no tienen la misma longitud"
 
-    print("--- Iniciando Optimización ---")
-    for gen in range(nmax):
-        poblacion = utils.procesar_generacion(poblacion)
-      
-        distancias = [utils.funcion_objetivo(ind) for ind in poblacion]
-        
-        print(f"Distancias de la población: {[f'{e:.2e}' for e in distancias[:5]]} ...")
-        #Las distancias se suponen que son viables
-        if any(e <= 0 for e in distancias):
-            print("Error: Se encontró una distancia no positiva en la población que se pasará a la siguiente iteración (IMPOSIBLE)")
-            break
-        
-        fitness_globales = utils.obtener_fitnesses_global(distancias, distancia_menor_global, distancia_mayor_global)
+        # Depuración: imprimir listas
+        print(f"Generación {gen + 1} - Fitnesses: {fitnesses}")
+        print(f"Generación {gen + 1} - Población: {poblacion}")
 
-        print(f"Fitnesses normalizados: {[f'{f:.6e}' for f in fitness_globales[:5]]}")
-        if all(f == 0 for f in fitness_globales):
-            print("Todos los individuos tuvieron consumo de distancia = 0 (IMPOSIBLE)")
+        # Selección
+        seleccionados = utils.seleccion_ruleta(poblacion, fitnesses)
+
+        # Crossover
+        nueva_poblacion = []
+        for i in range(0, len(seleccionados), 2):
+            padre1, padre2 = seleccionados[i], seleccionados[(i + 1) % len(seleccionados)]
+            hijo1, hijo2 = utils.crossover_ciclico(padre1, padre2)
+            nueva_poblacion.extend([hijo1, hijo2])
+
+        # Mutación
+        poblacion = [utils.mutacion(ind) for ind in nueva_poblacion]
 
         # Guardar datos para el gráfico
-        max_fitness_history.append(np.max(fitness_globales))
-        print(f"Generación {gen+1}: Max Fitness = {max_fitness_history[-1]:.6e}")
-        avg_fitness_history.append(np.mean(fitness_globales))
-        min_fitness_history.append(np.min(fitness_globales))
+        max_fitness_history.append(max(fitnesses))
+        avg_fitness_history.append(np.mean(fitnesses))
+        min_fitness_history.append(min(fitnesses))
 
-        max_distancias_history.append(np.max(distancias))
-        avg_distancias_history.append(np.mean(distancias))
-        min_distancias_history.append(np.min(distancias))
-        print(f"Generación {gen+1}: Min distancia = {min_distancias_history[-1]:.2e}")
+        # Encontrar el mejor individuo de la generación
+        mejor_fitness_gen = max(fitnesses)
+        if mejor_fitness_gen in fitnesses:
+            idx = fitnesses.index(mejor_fitness_gen)
+            if idx < len(poblacion):
+                mejor_individuo = poblacion[idx]
+            else:
+                print("Error: Índice fuera de rango para la población")
+        else:
+            print("Error: mejor_fitness_gen no está en la lista fitnesses")
 
-        # Encontrar y guardar la mejor solución (menor distancia)
-        idx_mejor = distancias.index(min(distancias))  # El mejor es el de MENOR distancia
-        distancia_mejor = distancias[idx_mejor]
-        #print("Mejor distancia generación:", distancia_mejor)
+        print(f"Generación {gen + 1}: Mejor fitness = {mejor_fitness:.6f}")
 
-        if distancia_mejor <= mejor_distancia_global:  
-            mejor_distancia_global = distancia_mejor
-            mejor_individuo_global = poblacion[idx_mejor]
-            mejor_generacion = gen + 1 
-
+    # Mostrar resultados finales
     print("\n--- Optimización Finalizada ---")
+    print(f"Mejor individuo: {mejor_individuo}")
+    print(f"Mejor fitness: {mejor_fitness:.6f}")
+
+    # Graficar resultados
+    plt.figure(figsize=(10, 6))
+    plt.plot(max_fitness_history, label="Máximo Fitness", color="green")
+    plt.plot(avg_fitness_history, label="Fitness Promedio", color="blue")
+    plt.plot(min_fitness_history, label="Mínimo Fitness", color="red")
+    plt.xlabel("Generaciones")
+    plt.ylabel("Fitness")
+    plt.title("Evolución del Fitness a lo largo de las generaciones")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+if __name__ == "__main__":
+    run_optimization()
