@@ -14,44 +14,55 @@ def crear_poblacion_inicial():
 
 
 def crossover_ciclico(padre1, padre2):
-    """
-    Realiza el crossover cíclico entre dos padres para generar dos hijos.
-    """
-    longitud = len(padre1)
-    hijo1 = [-1] * longitud
-    hijo2 = [-1] * longitud
+    n = len(padre1)
+    hijo1 = [-1] * n
+    hijo2 = [-1] * n
+    visitados = [False] * n
+    ciclo = 0  # para alternar
 
-    # Elegir un punto inicial para el ciclo
-    inicio = 0
-    while -1 in hijo1:
-        if hijo1[inicio] == -1:
-            valor = padre1[inicio]
-            while True:
-                hijo1[inicio] = padre1[inicio]
-                hijo2[inicio] = padre2[inicio]
-                valor = padre2[inicio]
-                inicio = padre1.index(valor)
-                if valor == padre1[hijo1.index(-1)]:
-                    break
-
-    # Rellenar los valores restantes
-    for i in range(longitud):
-        if hijo1[i] == -1:
-            hijo1[i] = padre2[i]
-            hijo2[i] = padre1[i]
+    for start in range(n):
+        if visitados[start]:
+            continue
+        # construye un ciclo a partir de start
+        idx = start
+        ciclo_indices = []
+        while True:
+            ciclo_indices.append(idx)
+            visitados[idx] = True
+            valor_en_padre2 = padre2[idx]
+            idx = padre1.index(valor_en_padre2)
+            if idx == start:
+                break
+        # alterna los ciclos para que no hijo1 no reciba siempre genes de padre1 y viceversa
+        if ciclo % 2 == 0:
+            for i in ciclo_indices:
+                hijo1[i] = padre1[i]
+                hijo2[i] = padre2[i]
+        else:
+            for i in ciclo_indices:
+                hijo1[i] = padre2[i]
+                hijo2[i] = padre1[i]
+        ciclo += 1
 
     return hijo1, hijo2
 
+
 def mutacion(individual):
-    if random.random() < config.PROBABILIDAD_MUTACION: #Se invoca la función random.random y si sale menor que la probabilidad de la mutación, ingresa a esta misma
-        print("MUTACIÓN APLICADA")
-        bit_a_modificar = random.randint(0, BIT_LENGTH - 1) #Se elige un bit al azar
-        individual = list(individual) #Se convierte el cromosoma a una lista para poder modificarlo porque los strings son inmutables
-        if individual[bit_a_modificar] == '0':
-            individual[bit_a_modificar] = '1'
-        else:
-            individual[bit_a_modificar] = '0'
-        individual = ''.join(individual) #Se convierte nuevamente a string
+    """
+    Mutación para permutaciones (TSP): intercambio (swap mutation).
+
+    - Con probabilidad `config.PROBABILIDAD_MUTACION` se eligen dos posiciones aleatorias
+      y se intercambian. Esto preserva la propiedad de permutación (no aparecen duplicados
+      ni faltan elementos).
+    - Devuelve una copia del individuo modificado (no muta el original in-place por seguridad).
+    """
+    if random.random() < config.PROBABILIDAD_MUTACION:
+        # Elegir dos índices distintos y hacer swap
+        i, j = random.sample(range(len(individual)), 2)
+        nuevo = list(individual)
+        nuevo[i], nuevo[j] = nuevo[j], nuevo[i]
+        return nuevo
+    # No aplicar mutación -> devolver el individuo tal cual
     return individual
 
 def seleccion_ruleta(pop, fitnesses):

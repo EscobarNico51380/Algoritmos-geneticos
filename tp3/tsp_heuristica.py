@@ -6,16 +6,25 @@ def limpiar_tildes(texto):
     return ''.join(c for c in unicodedata.normalize('NFKD', texto) if not unicodedata.combining(c))
 
 # --- Cargar matriz de distancias desde Excel ---
+# ...existing code...
 def cargar_matriz(nombre_archivo):
-    df = pd.read_excel(nombre_archivo, index_col=0)
-
+    from pathlib import Path
+    ruta = Path(__file__).parent / nombre_archivo  # ruta relativa al archivo .py
+    if not ruta.exists():
+        raise FileNotFoundError(f"Archivo no encontrado: {ruta}")
+    try:
+        df = pd.read_excel(ruta, index_col=0)
+    except Exception as e:
+        raise RuntimeError(f"No se pudo leer el archivo Excel {ruta}: {e}")
+    # ...existing code...
     df.columns = [limpiar_tildes(c).strip() for c in df.columns]
     df.index = [limpiar_tildes(i).strip() for i in df.index]
     return df
+# ...existing code...
 
 # --- Heurística del vecino más cercano ---
 def vecino_mas_cercano(matriz, ciudad_inicio):
-    ciudades = list(matriz.columns)
+    ciudades = list(matriz.columns) ##matriz.columns lo que hace es devolver una lista con los nombres de las ciudades
     visitadas = [ciudad_inicio] 
     actual = ciudad_inicio
     distancia_total = 0
