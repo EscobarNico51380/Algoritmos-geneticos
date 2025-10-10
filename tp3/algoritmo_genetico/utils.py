@@ -12,40 +12,38 @@ def crear_poblacion_inicial():
 
     return poblacion
 
-
 def crossover_ciclico(padre1, padre2):
-    n = len(padre1)
-    hijo1 = [-1] * n
-    hijo2 = [-1] * n
-    visitados = [False] * n
-    ciclo = 0  # para alternar
+    cant_hijos = 0
+    hijos = []
 
-    for start in range(n):
-        if visitados[start]:
-            continue
-        # construye un ciclo a partir de start
-        idx = start
-        ciclo_indices = []
-        while True:
-            ciclo_indices.append(idx)
-            visitados[idx] = True
-            valor_en_padre2 = padre2[idx]
-            idx = padre1.index(valor_en_padre2)
-            if idx == start:
-                break
-        # alterna los ciclos para que no hijo1 no reciba siempre genes de padre1 y viceversa
-        if ciclo % 2 == 0:
-            for i in ciclo_indices:
-                hijo1[i] = padre1[i]
-                hijo2[i] = padre2[i]
+    while cant_hijos < 2:
+        if cant_hijos == 0:
+            padreA = padre1
+            padreB = padre2
         else:
-            for i in ciclo_indices:
-                hijo1[i] = padre2[i]
-                hijo2[i] = padre1[i]
-        ciclo += 1
+            padreA = padre2
+            padreB = padre1
 
-    return hijo1, hijo2
+        n = len(padreA)
+        hijo = [-1] * n # inicializa con -1 (para decir que esos indices aun no fueron asignados)
 
+        idx = 0 # indice inicial del ciclo
+        while hijo[idx] == -1:
+            hijo[idx] = padreA[idx] #Asigno el valor de padreA
+            valor_en_padreB = padreB[idx] #Valor que esta en el mismo indice, pero en padre 2
+            if valor_en_padreB == padreA[0]: #Si el valor que esta en padreB, es igual al valor inicial del ciclo, se cierra el ciclo.
+                break
+            idx = padreA.index(valor_en_padreB) #Este es el indice en padreA, de ese valor que estaba en padreB
+
+        # completa el resto con genes del padreB
+        for i in range(n):
+            if hijo[i] == -1:
+                hijo[i] = padreB[i]
+            #else --> Entonces hijo ya tiene un valor agregado en ese indice
+        hijos.append(hijo)
+        cant_hijos += 1
+    
+    return hijos[0], hijos[1]
 
 def mutacion(individual):
     """

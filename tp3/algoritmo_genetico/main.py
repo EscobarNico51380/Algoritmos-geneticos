@@ -51,7 +51,10 @@ def run_optimization():
 
         # Verificar consistencia de datos
         assert len(fitnesses) == len(poblacion), "Las listas fitnesses y poblacion no tienen la misma longitud"
-
+        
+        if not fitnesses:
+            raise RuntimeError(f"Lista de fitness vacía en generación {gen}. Poblacion: {len(poblacion)}")
+    
         # Depuración: imprimir listas
         print(f"Generación {gen + 1} - Fitnesses: {fitnesses}")
         print(f"Generación {gen + 1} - Población: {poblacion}")
@@ -75,8 +78,6 @@ def run_optimization():
             poblacion = [utils.mutacion(ind) for ind in nueva_poblacion]
 
         # Guardar datos para el gráfico
-        if not fitnesses:
-            raise RuntimeError(f"Lista de fitness vacía en generación {gen}. Poblacion: {len(poblacion)}")
         max_fitness_history.append(max(fitnesses))
         avg_fitness_history.append(np.mean(fitnesses))
         min_fitness_history.append(min(fitnesses))
