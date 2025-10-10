@@ -3,19 +3,33 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import utils
 import config
+import unicodedata
+
+def limpiar_tildes(texto):
+    return ''.join(c for c in unicodedata.normalize('NFKD', texto) if not unicodedata.combining(c))
+
 
 def cargar_matriz(nombre_archivo):
-    # Lee el archivo y salta la primera fila (que dice "Distancias en kilómetros")
-    ruta_completa = f"../{nombre_archivo}"
-    df = pd.read_excel(ruta_completa, skiprows=0, index_col=0)
-
+    from pathlib import Path
+    ruta = Path(__file__).parent / nombre_archivo  # ruta relativa al archivo .py
+    if not ruta.exists():
+        raise FileNotFoundError(f"Archivo no encontrado: {ruta}")
+    try:
+        df = pd.read_excel(ruta, index_col=0)
+    except Exception as e:
+        raise RuntimeError(f"No se pudo leer el archivo Excel {ruta}: {e}")
+    # ...existing code...
+    df.columns = [limpiar_tildes(c).strip() for c in df.columns]
+    df.index = [limpiar_tildes(i).strip() for i in df.index]
     return df
 
 def run_optimization():
-    matriz = cargar_matriz("TablaCapitales.xlsx")
+    matriz = cargar_matriz("../TablaCapitales.xlsx")
 
     # Crear población inicial
     poblacion = utils.crear_poblacion_inicial()
+    if not poblacion:
+        raise RuntimeError("La población inicial está vacía. Revise utils.crear_poblacion_inicial() y config.TAMANO_POBLACION")
 
     # Configuración del algoritmo genético
     generaciones = config.NUM_GENERACIONES
@@ -29,6 +43,10 @@ def run_optimization():
 
     for gen in range(generaciones):
         # Evaluar fitness de la población
+        if not poblacion:
+            # La población quedó vacía por alguna razón en la iteración anterior
+            print(f"Advertencia: población vacía en generación {gen}. Recreando población inicial...")
+            poblacion = utils.crear_poblacion_inicial()
         fitnesses = [utils.fitness(ind, matriz) for ind in poblacion]
 
         # Verificar consistencia de datos
@@ -49,9 +67,16 @@ def run_optimization():
             nueva_poblacion.extend([hijo1, hijo2])
 
         # Mutación
-        poblacion = [utils.mutacion(ind) for ind in nueva_poblacion]
+        if not nueva_poblacion:
+            # Evitar que la población se quede vacía: recrear o mantener seleccionados aleatorios
+            print(f"Advertencia: nueva_poblacion vacía en generación {gen}. Recreando población inicial...")
+            poblacion = utils.crear_poblacion_inicial()
+        else:
+            poblacion = [utils.mutacion(ind) for ind in nueva_poblacion]
 
         # Guardar datos para el gráfico
+        if not fitnesses:
+            raise RuntimeError(f"Lista de fitness vacía en generación {gen}. Poblacion: {len(poblacion)}")
         max_fitness_history.append(max(fitnesses))
         avg_fitness_history.append(np.mean(fitnesses))
         min_fitness_history.append(min(fitnesses))
