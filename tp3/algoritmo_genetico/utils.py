@@ -5,7 +5,7 @@ def crear_poblacion_inicial():
     poblacion = []
 
     for _ in range(config.TAMANO_POBLACION):
-        # Generar una permutación aleatoria de los números del 1 al 23
+        # Generar una permutación aleatoria de los números del 1 al 23, sin duplicados
         individuo = list(range(1, 24))
         random.shuffle(individuo)
         poblacion.append(individuo)
@@ -29,9 +29,10 @@ def crossover_ciclico(padre1, padre2):
 
         idx = 0 # indice inicial del ciclo
         while hijo[idx] == -1:
-            # El primer valor del padreA es igual al primer valor del padreB --> El hijo quedaria igual al padreB
-            if padreA[idx] == padreB[idx]:
-                idx = random.randint(1, n - 1) #Elijo un indice aleatorio para iniciar el ciclo
+            # El PRIMER valor del padreA es igual al PRIMER valor del padreB --> El hijo quedaria igual al padreB
+            # if padreA[0] == padreB[0]:
+            #     idx = random.randint(1, n - 1) #Elijo un indice aleatorio para iniciar el ciclo
+            #LO SACAMOS PORQUE HACE QUE ROMPA EL CICLO. EL CICLO DEBE EMPEZAR CON idx=0
             #Sino empieza normal en el indice 0
             hijo[idx] = padreA[idx] #Asigno el valor de padreA
             valor_en_padreB = padreB[idx] #Valor que esta en el mismo indice, pero en padre 2
@@ -50,14 +51,7 @@ def crossover_ciclico(padre1, padre2):
     return hijos[0], hijos[1]
 
 def mutacion(individual):
-    """
-    Mutación para permutaciones (TSP): intercambio (swap mutation).
-
-    - Con probabilidad `config.PROBABILIDAD_MUTACION` se eligen dos posiciones aleatorias
-      y se intercambian. Esto preserva la propiedad de permutación (no aparecen duplicados
-      ni faltan elementos).
-    - Devuelve una copia del individuo modificado (no muta el original in-place por seguridad).
-    """
+    
     if random.random() < config.PROBABILIDAD_MUTACION:
         # Elegir dos índices distintos y hacer swap
         i, j = random.sample(range(len(individual)), 2)
@@ -65,6 +59,15 @@ def mutacion(individual):
         nuevo[i], nuevo[j] = nuevo[j], nuevo[i]
         return nuevo
     # No aplicar mutación -> devolver el individuo tal cual
+    return individual
+
+def inversion_mutacion(individual):
+    if random.random() < config.PROBABILIDAD_MUTACION:
+        i, j = sorted(random.sample(range(len(individual)), 2))
+        nuevo = list(individual)
+        # Invertir el segmento entre i y j (inclusive)
+        nuevo[i:j+1] = reversed(nuevo[i:j+1])
+        return nuevo
     return individual
 
 def seleccion(pop, fitnesses):
@@ -135,13 +138,17 @@ def torneo(pop, fitnesses):
 
 def funcion_objetivo(individuo, matriz):
     # Calcula la distancia total recorrida por un individuo (ruta).
-  
+    
+    print("Inicio de la ruta")
     distancia_total = 0
     for i in range(len(individuo)):
+        if i == 0:
+            print(f"Ciudad inicial: {individuo[i]}")
         ciudad_actual = individuo[i]
         ciudad_siguiente = individuo[(i + 1) % len(individuo)]  # Regresa a la ciudad inicial
         distancia_total += matriz.iloc[ciudad_actual-1, ciudad_siguiente-1]
-
+    
+    print(f"Fin de la ruta en: {ciudad_siguiente}")
     return distancia_total
 
 def fitnesses_locales(distancias):

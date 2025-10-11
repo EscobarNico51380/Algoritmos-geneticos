@@ -87,7 +87,7 @@ def run_optimization():
             print(f"Advertencia: nueva_poblacion vacía en generación {gen}. Recreando población inicial...")
             poblacion = utils.crear_poblacion_inicial()
         else:
-            poblacion = [utils.mutacion(ind) for ind in nueva_poblacion]
+            poblacion = [utils.inversion_mutacion(ind) for ind in nueva_poblacion]
 
         # Acá tenemos que guardar los fitness globales (en base a un valor max y uno mínimo que sea común para todas las generaciones (un rango global))
         fitnesses_globales = utils.fitness_global(distancias, fitness_min_global, fitness_max_global)
@@ -120,6 +120,7 @@ def run_optimization():
     # Mostrar resultados finales
     print("\n--- Optimización Finalizada ---")
     print(f"Mejor individuo global: {mejor_individuo_global}")
+    print(f"Provincias recorridas: {[matriz.columns[i] for i in mejor_individuo_global] + [matriz.columns[0]]}") #Se agrega la ciudad de inicio porque es IMPLÍCITA (se calcula en la funcion objetivo, no en el cromosoma)
     print(f"Mejor fitness: {mejor_fitness_global:.6f}")
     print(f"Distancia del mejor individuo: {min(min_distancia_history):.2f}")
 
