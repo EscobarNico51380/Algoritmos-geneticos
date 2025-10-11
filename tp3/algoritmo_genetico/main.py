@@ -49,7 +49,7 @@ def run_optimization():
     min_distancia_history = []
 
     fitness_min_global = 0
-    fitness_max_global = 10000
+    fitness_max_global = 1000000
 
     for gen in range(generaciones):
         # Evaluar fitness de la población
@@ -60,8 +60,7 @@ def run_optimization():
         distancias = [utils.funcion_objetivo(ind, matriz) for ind in poblacion]
         
         
-        suma_total_distancias = sum(distancias)
-        fitnesses_locales = [utils.fitness_local(dist, suma_total_distancias) for dist in distancias]
+        fitnesses_locales = utils.fitnesses_locales(distancias)
         
         print(f"Generación {gen + 1} - Distancias: {distancias}"
               f"\nGeneración {gen + 1} - Fitnesses Locales: {fitnesses_locales}")
@@ -71,7 +70,7 @@ def run_optimization():
             raise RuntimeError(f"Lista de fitness vacía en generación {gen}. Poblacion: {len(poblacion)}")
         
         # Selección
-        seleccionados = utils.seleccion_ruleta(poblacion, fitnesses_locales)
+        seleccionados = utils.seleccion(poblacion, fitnesses_locales)
         print(f"Generación {gen + 1} - Seleccionados: {seleccionados}")
         print(f"Generación {gen + 1} - Población: {poblacion}")
 
@@ -122,6 +121,7 @@ def run_optimization():
     print("\n--- Optimización Finalizada ---")
     print(f"Mejor individuo global: {mejor_individuo_global}")
     print(f"Mejor fitness: {mejor_fitness_global:.6f}")
+    print(f"Distancia del mejor individuo: {min(min_distancia_history):.2f}")
 
     # Graficar fitnesses globales
     plt.figure(figsize=(10, 6))

@@ -29,6 +29,10 @@ def crossover_ciclico(padre1, padre2):
 
         idx = 0 # indice inicial del ciclo
         while hijo[idx] == -1:
+            # El primer valor del padreA es igual al primer valor del padreB --> El hijo quedaria igual al padreB
+            if padreA[idx] == padreB[idx]:
+                idx = random.randint(1, n - 1) #Elijo un indice aleatorio para iniciar el ciclo
+            #Sino empieza normal en el indice 0
             hijo[idx] = padreA[idx] #Asigno el valor de padreA
             valor_en_padreB = padreB[idx] #Valor que esta en el mismo indice, pero en padre 2
             if valor_en_padreB == padreA[0]: #Si el valor que esta en padreB, es igual al valor inicial del ciclo, se cierra el ciclo.
@@ -63,20 +67,51 @@ def mutacion(individual):
     # No aplicar mutación -> devolver el individuo tal cual
     return individual
 
-def seleccion_ruleta(pop, fitnesses):
+def seleccion(pop, fitnesses):
+    # Ahora los fitness ya están correctos: mayor fitness = mejor individuo
+    
+    if not pop or not fitnesses:
+        return random.choice(pop) if pop else None
+    
+    total = sum(fitnesses)
+    if total == 0:
+        # Caso extremo: todos los individuos tienen fitness 0
+        return random.choice(pop)
+    
+    seleccionados = []
+    
+    #ELITISMO
+    #Agregamos los primeros CANTIDAD_ELITISMO individuos (los mejores)
+    #Reordenamos los fitnesses y la poblacion en base a los fitnesses, para que se correspondan
+    # Unimos ambos arreglos
+    combinados = list(zip(pop, fitnesses))
+
+    # Ordenamos por fitness (índice 1 del par), de mayor a menor
+    combinados.sort(key=lambda x: x[1], reverse=True) #x[1] es el fitness
+
+    # Desempaquetamos de nuevo
+    poblacion_ordenada, fitnesses_ordenados = zip(*combinados)
+
+    poblacion = list(poblacion_ordenada)
+    fitnesses = list(fitnesses_ordenados)
+
+    for i in range(config.TAMANO_ELITE):
+        seleccionados.append(poblacion[i]) #Agrego los TAMANO_ELITE individuos a la lista de seleccionados
+
+    #RULETA
     probs_acumuladas, acumulado = [], 0
     for prob in fitnesses:
         acumulado += prob
         probs_acumuladas.append(acumulado)
 
-    seleccionados = []
-    for _ in range(len(pop)):
+    for _ in range(len(poblacion) - len(seleccionados)): #Completo el resto de la poblacion con seleccion por ruleta
         r = random.random()
         for i in range(len(probs_acumuladas)):
             if r <= probs_acumuladas[i]:
-                seleccionados.append(pop[i])
+                seleccionados.append(poblacion[i])
                 break
             #Sino, vuelve al ciclo y sigue buscando a quien le corresponde el número aleatorio
+    
     return seleccionados
 
 def torneo(pop, fitnesses):
@@ -109,11 +144,25 @@ def funcion_objetivo(individuo, matriz):
 
     return distancia_total
 
-def fitness_local(distancia, suma_total_distancias):
+def fitnesses_locales(distancias):
     # Calcula el fitness de un individuo basado en la distancia total recorrida.
     #Hay que calcular la suma de todas las distancias de todos los individuos
 
-    return (distancia / suma_total_distancias) if distancia > 0 else 0
+    EPS = 1e-9  # Para evitar división por cero
+    fitness_values = [1.0 / (dist + EPS) for dist in distancias] #Esto hace que mayor fitness --> mejor solución
+
+    # Normalizar para que sumen 1
+    total = sum(fitness_values)
+    if total > 0:
+        fitness_values = [f / total for f in fitness_values]
+    else:
+        # Caso extremo: todos fitness infinitos --> todas las energias penalizadas
+        fitness_values = [1.0 / len(distancias)] * len(distancias)
+    print("Sumatoria de fitness (debe dar 1):", sum(fitness_values))
+    
+    return fitness_values
+
+
 
 def fitness_global(distancias, fit_min, fit_max):
     # Normaliza el fitness a un rango [fit_min, fit_max] basado en los valores mínimo y máximo globales.
