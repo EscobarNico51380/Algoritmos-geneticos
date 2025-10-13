@@ -138,17 +138,16 @@ def torneo(pop, fitnesses):
 
 def funcion_objetivo(individuo, matriz):
     # Calcula la distancia total recorrida por un individuo (ruta).
-    
-    print("Inicio de la ruta")
+    #['Cdad. de Bs. As.', 'Cordoba', 'Corrientes', 'Formosa', 'La Plata', 'La Rioja', 'Mendoza', 'Neuquen', 'Parana', 'Posadas', 'Rawson', 'Resistencia', 'Rio Gallegos', 'S.F.d.V.d. Catamarca', 'S.M. de Tucuman', 'S.S. de Jujuy', 'Salta', 'San Juan', 'San Luis', 'Santa Fe', 'Santa Rosa', 'Sgo. Del Estero', 'Ushuaia', 'Viedma']
+    ciudades = {1: 'Cdad. de Bs. As.', 2: 'Cordoba', 3: 'Corrientes', 4: 'Formosa', 5: 'La Plata', 6: 'La Rioja', 7: 'Mendoza', 8: 'Neuquen', 9: 'Parana', 10: 'Posadas', 11: 'Rawson', 12: 'Resistencia', 13: 'Rio Gallegos', 14: 'S.F.d.V.d. Catamarca', 15: 'S.M. de Tucuman', 16: 'S.S. de Jujuy', 17: 'Salta', 18: 'San Juan', 19: 'San Luis', 20: 'Santa Fe', 21: 'Santa Rosa', 22: 'Sgo. Del Estero', 23: 'Ushuaia', 24: 'Viedma'}
+    print(f"Ciudades en la matriz: {ciudades}")
     distancia_total = 0
     for i in range(len(individuo)):
-        if i == 0:
-            print(f"Ciudad inicial: {individuo[i]}")
-        ciudad_actual = individuo[i]
-        ciudad_siguiente = individuo[(i + 1) % len(individuo)]  # Regresa a la ciudad inicial
-        distancia_total += matriz.iloc[ciudad_actual-1, ciudad_siguiente-1]
+
+        ciudad_actual = ciudades[individuo[i]]
+        ciudad_siguiente = ciudades[individuo[(i + 1) % len(individuo)]]
+        distancia_total += matriz.loc[ciudad_actual, ciudad_siguiente]
     
-    print(f"Fin de la ruta en: {ciudad_siguiente}")
     return distancia_total
 
 def fitnesses_locales(distancias):
@@ -165,7 +164,6 @@ def fitnesses_locales(distancias):
     else:
         # Caso extremo: todos fitness infinitos --> todas las energias penalizadas
         fitness_values = [1.0 / len(distancias)] * len(distancias)
-    print("Sumatoria de fitness (debe dar 1):", sum(fitness_values))
     
     return fitness_values
 
