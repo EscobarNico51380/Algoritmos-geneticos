@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import unicodedata
+from generar_mapa import generar_mapa
 
 def limpiar_tildes(texto):
     return ''.join(c for c in unicodedata.normalize('NFKD', texto) if not unicodedata.combining(c))
@@ -42,6 +43,7 @@ def vecino_mas_cercano(matriz, ciudad_inicio):
     # Regresar a la ciudad de inicio
     distancia_total += matriz.loc[actual, ciudad_inicio]
     visitadas.append(ciudad_inicio)
+    print("ciudades visitadas:", visitadas)
 
     return visitadas, distancia_total
 
@@ -71,6 +73,7 @@ def menu():
                 continue
 
             recorrido, distancia = vecino_mas_cercano(matriz, ciudad_inicio)
+            generar_mapa(recorrido, filename="ruta_ciudades_individual.html")
             print("\n--- RESULTADO ---")
             print(f"Ciudad de inicio: {ciudad_inicio}")
             print(f"Recorrido: {' -> '.join(recorrido)}")
@@ -90,6 +93,8 @@ def menu():
             print(f"Mejor ciudad de inicio: {mejor_ruta[0]}")
             print(f"Recorrido: {' -> '.join(mejor_ruta)}")
             print(f"Distancia total: {mejor_distancia:.2f} km")
+            
+            generar_mapa(mejor_ruta, filename="ruta_ciudades_general.html")
 
         elif opcion == "c":
             print("Saliendo del programa...")

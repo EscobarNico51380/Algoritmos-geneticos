@@ -1,9 +1,16 @@
+import sys
+import unicodedata
+from pathlib import Path
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import utils
 import config
-import unicodedata
+import utils
+
+directorio_superior = Path(__file__).resolve().parent.parent
+sys.path.append(str(directorio_superior))
+from ciudades import ciudades
+from generar_mapa import generar_mapa
 
 def limpiar_tildes(texto):
     return ''.join(c for c in unicodedata.normalize('NFKD', texto) if not unicodedata.combining(c))
@@ -116,12 +123,19 @@ def run_optimization():
         else:
             poblacion = [utils.inversion_mutacion(ind) for ind in nueva_poblacion]
 
-    ciudades = {1: 'Cdad. de Bs. As.', 2: 'Cordoba', 3: 'Corrientes', 4: 'Formosa', 5: 'La Plata', 6: 'La Rioja', 7: 'Mendoza', 8: 'Neuquen', 9: 'Parana', 10: 'Posadas', 11: 'Rawson', 12: 'Resistencia', 13: 'Rio Gallegos', 14: 'S.F.d.V.d. Catamarca', 15: 'S.M. de Tucuman', 16: 'S.S. de Jujuy', 17: 'Salta', 18: 'San Juan', 19: 'San Luis', 20: 'Santa Fe', 21: 'Santa Rosa', 22: 'Sgo. Del Estero', 23: 'Ushuaia', 24: 'Viedma'}
-
+    if mejor_individuo_global:
+            ruta_nombres = [ciudades[numero_ciudad - 1]['nombre'] for numero_ciudad in mejor_individuo_global]
+            # Para cerrar el ciclo, se añade la primera ciudad al final
+            ruta_nombres.append(ruta_nombres[0])
+    else:
+        ruta_nombres = []
+        
     # Mostrar resultados finales
     print("\n--- Optimización Finalizada ---")
-    print(f"Mejor individuo global: {mejor_individuo_global}")
-    print(f"Provincias recorridas: {[[ciudades[valor] for _,valor in enumerate(mejor_individuo_global)] + [ciudades[mejor_individuo_global[0]]] ]}") #Se agrega la ciudad de inicio porque es IMPLÍCITA (se calcula en la funcion objetivo, no en el cromosoma)
+    print(f"Mejor individuo global (números): {mejor_individuo_global}")
+    print(f"Mejor ruta: {' -> '.join(ruta_nombres)}")
+    generar_mapa(ruta_nombres, filename="ruta_ciudades_ag.html")
+    
     print(f"Mejor fitness teórico (el del mejor individuo guardado): {mejor_fitness_global:.6f}")
     print(f"Mejor fitness real (guardado en el history): {max(max_fitness_history):.6f}")
     print(f"Distancia del mejor individuo teórica (del mejor individuo): {mejor_distancia_global:.2f}")
