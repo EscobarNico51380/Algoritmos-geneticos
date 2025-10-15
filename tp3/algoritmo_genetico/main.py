@@ -131,6 +131,7 @@ def run_optimization():
         ruta_nombres = []
         
     # Mostrar resultados finales
+    return {'max_fitnesses': max_fitness_history, 'min_distancias': min_distancia_history}
     print("\n--- Optimización Finalizada ---")
     print(f"Mejor individuo global (números): {mejor_individuo_global}")
     print(f"Mejor ruta: {' -> '.join(ruta_nombres)}")
@@ -141,29 +142,38 @@ def run_optimization():
     print(f"Distancia del mejor individuo teórica (del mejor individuo): {mejor_distancia_global:.2f}")
     print(f"Distancia del mejor individuo real (guardada en el history): {min(min_distancia_history):.2f}")
 
+    
+
+def main():
+    fitness_maximos_history = [] #arrays de arrays
+    distancias_minimas_history = []
+    for i in range(5):  # Ejecutar 5 veces
+        print(f"\n--- Ejecución {i + 1} ---")
+        resultados = run_optimization()
+        fitness_maximos_history.append(resultados['max_fitnesses'])
+        distancias_minimas_history.append(resultados['min_distancias'])
+    
     # Graficar fitnesses globales
     plt.figure(figsize=(10, 6))
-    plt.plot(max_fitness_history, label="Máximo Fitness", color="green")
-    plt.plot(avg_fitness_history, label="Fitness Promedio", color="blue")
-    plt.plot(min_fitness_history, label="Mínimo Fitness", color="red")
+    for i, _ in enumerate(fitness_maximos_history):
+        plt.plot(fitness_maximos_history[i], label=f"Corrida {i + 1}")
     plt.xlabel("Generaciones")
     plt.ylabel("Fitness")
-    plt.title("Evolución del Fitness a lo largo de las generaciones")
+    plt.title("Evolución del Fitness a lo largo de las generaciones por corrida")
     plt.legend()
     plt.grid()
     plt.show()
 
     # Graficar distancias
     plt.figure(figsize=(10, 6))
-    plt.plot(max_distancia_history, label="Máxima Distancia", color="green")
-    plt.plot(avg_distancia_history, label="Distancia Promedio", color="blue")
-    plt.plot(min_distancia_history, label="Mínimo Distancia", color="red")
+    for i, _ in enumerate(distancias_minimas_history):
+        plt.plot(distancias_minimas_history[i], label=f"Corrida {i + 1}")
     plt.xlabel("Generaciones")
     plt.ylabel("Distancia")
-    plt.title("Evolución de la Distancia a lo largo de las generaciones")
+    plt.title("Evolución de la Distancia a lo largo de las generaciones por corrida")
     plt.legend()
     plt.grid()
     plt.show()
 
 if __name__ == "__main__":
-    run_optimization()
+    main()
